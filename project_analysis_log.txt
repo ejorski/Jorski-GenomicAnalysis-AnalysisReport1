@@ -1,0 +1,120 @@
+enter into GenomicAnalysis directory
+cd GenomicAnalysis
+
+make project directory in GenomicAnalysis
+mkdir project
+cd project
+
+make data, analysis, and scripts subdirectories
+mkdir data
+mkdir analysis
+mkdir scripts
+
+enter data 
+cd data
+
+create placeholder file
+touch placeholder.txt
+
+make raw and processed directories in data
+mkdir raw
+mkdir processed
+
+create placeholders in raw
+cd raw
+touch placeholder.txt
+
+go back into data, enter processed and make placeholder
+cd -
+cd processed
+touch placeholder.txt
+
+go back into project, enter analysis
+cd ..
+cd ..
+cd analysis 
+
+make placeholder in analysis
+touch placeholder.txt
+
+make fastgc and bamgc directories in analysis
+mkdir fastgc
+mkdir bamgc
+
+enter and make placeholder in fastgc
+cd fastgc
+touch placeholder.txt
+
+enter and make placeholder in bamgc
+cd -
+cd bamgc
+touch placeholder.txt
+
+get back into project and enter scripts
+cd ..
+cd ..
+
+enter scripts and make placeholder
+cd scripts
+touch placeholder.txt
+
+beginning to initialize Git repo
+get into project directory from scripts
+cd ..
+
+turn project into a git repository
+git init
+git add .
+git commit -m "Initializing git repo"
+
+ssh token and press enter through the file and password prompts
+ssh-keygen -t ed25519 -C "GenomicsCourse"
+
+load private key to memory
+eval "$(shh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+
+cat public key
+cat ~/.ssh/id_ed25519.pub
+
+go to github and paste public key
+
+set origin point to online github repo
+git remote set-url origin git@github.com:ejorski/GenomicsCourse.git
+
+error: no such remote 'origin', I used https://stackoverflow.com/questions/25503017/why-does-git-tell-me-no-such-remote-origin-when-i-try-to-push-to-origin when Googling error
+must use, because I have not set origin yet:
+step 1, make online repo on github
+git remote add origin https://github.com/ejorski/GenomicsCourse-jorski.git
+
+set url? not sure, but it worked!
+git remote set-url origin git@github.com:ejorski/Jorski-GenomicAnalysis-AnalysisReport1.git
+
+double check
+git remote -v
+
+looking good...
+now attach local to server
+git push -u origin main
+
+now we add our commentary and code under project so it can be replicated
+because we are still in project directory
+nano
+copy and past visual studio code notes 
+control O
+
+file name to write
+project_analysis_log.txt
+
+exit
+control X
+
+adding file now since I forgot to before uploading, source https://docs.github.com/en/repositories/working-with-files/managing-files/adding-a-file-to-a-repository
+staging it for commit
+git add .
+
+adding message
+git commit -m "Adding project_analysis_log.txt file"
+
+push 
+git push origin main
