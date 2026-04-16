@@ -118,3 +118,146 @@ git commit -m "Adding project_analysis_log.txt file"
 
 push 
 git push origin main
+
+assignment 2
+Emersyn Jorski
+2026-04-07
+
+enter HPC
+ssh ekj0039@10.119.6.131
+
+enter individual folder
+cd /data/Reynolds/ekj0039
+
+pull GitHub repo
+source: https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository
+git clone https://github.com/ejorski/Jorski-GenomicAnalysis-AnalysisReport1
+
+task 1
+create sub-directory in data
+cd Jorski-GenomicAnalysis-AnalysisReport1/
+cd data/
+mkdir HW2
+
+copy files and move to data/HW2/ and double check
+cp /data/Reynolds/GenomicAnalysisCourse/HW2/* /data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW2
+ls
+
+making pipe file
+cd HW2/
+touch hw2_intervals.bed
+
+extract intervals at >500bp and score > or equal to 100 from hw2.bed and pipe it into hw2_intervals
+awk '($3 - $2) > 500 && $5 >= 100' hw2.bed > hw2_intervals.bed
+##class
+
+
+checking
+head hw2_intervals.bed
+yay!
+
+task 2
+make pipe files
+touch hw2_duplicates.fam
+touch hw2_FID.counts
+
+print all duplicate IID and pipe into hw2_duplicates.fam:
+a. check if format is tab or ,: source: https://www.cyberciti.biz/faq/linux-unix-appleosx-bsd-cat-command-examples/
+cat -T hw2.fam | head
+
+
+sort should probably be customary anytime we want to use uniq...so im going to do so, esp because this is science and should get in the habit of never having clean pretty files
+then print repeated IIDs
+source:
+(https://linuxize.com/post/uniq-command-in-linux/)
+https://www.geeksforgeeks.org/linux-unix/uniq-command-in-linux-with-examples/
+https://unix.stackexchange.com/questions/104525/sort-based-on-the-third-column
+and use: uniq --help to see what the difference is between -d and -D, we will use -D because we want to analze/filter only for repeat IID AND keep everything within that row
+
+step 1, sort column 2 and only column 2
+step 2, pipe output into uniq then into hw2_duplicates.fam
+and save result into hw2_duplicates.fam
+$2 sort -k 2,2 hw2.fam | uniq -f 1 -D > hw2_duplicates.fam
+
+removing duplicates and counting
+we will use -c and -u
+start again with sorting column 2 only
+then pipe it into keeping only unique with -u
+then pipe that into counting how many unique lines we have 
+and save result into hw2_FID.counts
+
+step 1, sort based only on column 2
+remove all duplicate IID values by ignoring column 1 from hw2.fam and save it into hw2_FID.counts
+$2 sort -k 2,2 hw2.fam | uniq -f 1 -u > hw2_FID.counts
+
+now we will sort based on column 1, our FID column and count it
+awk '{print $1}' hw2_FID.counts | sort | uniq -c > hw2_FID.counts
+
+
+task 3
+make file for only sample names and modified headers respectively
+touch hw2_fasta_names.txt
+touch hw2_modID.fa
+
+part a
+use grep to find lines that begin with >, which is our sample ID
+and put it into our hw2_fasta_names.txt
+grep -P '>' hw2.fa > hw2_fasta_names.txt
+
+part b
+rewrite headers to remove underscore and only base ID left
+sed s/ / / will find the first instance and replace
+^> match the start of the line
+([^_]+) grabs everything that is not _
+.* gets the rest of the line
+>\1 replaces line that has > and everything that is not _
+sed -E 's/^>([^_]+).*/>\1/' hw2.fa > hw2_modID.fa
+
+task 4
+part a.1
+all the samples with FIDs from Russia and count
+cut -f1 <file> prints only column 1
+grep Russia keeps only lines with Russia
+wc -l counts lines
+cut -f1 v62.0_HO_public.fam | grep Russia | wc -l
+count: 986
+
+part a.2
+count how many unique FIDs from Russia
+similar to a.1 but sort to alphabetical order
+and uniq removes repeated lines
+cut -f1 v62.0_HO_public.fam | grep Russia | sort | uniq | wc -l
+count: 323
+
+part b
+look at the first 10 unique FIDs and select one that calls to me
+cut -f1 v62.0_HO_public.fam | grep Russia | sort | uniq | wc -l
+choosing Russia_Afanasievo.AG
+make new file v62_Russia_Afanasievo.AG.fam
+touch v62_Russia_Afanasievo.AG.fam
+awk '$1 == Russia_Afanasievo.AG' keeps only rows in column 1 where we have our selected FID and saves it into our new file
+awk '$1 == "Russia_Afanasievo.AG"' v62.0_HO_public.fam > v62_Russia_Afanasievo.AG.fam 
+
+now i will exit
+exit
+
+get where we need to be
+cd Desktop
+cd GenomicAnalysis
+cd project
+
+update analysis log
+nano project_analysis_log.txt
+add in all of our notes and code by copy paste from visual studio code
+
+get exact path to use for git add
+source: https://craftquest.io/guides/git/git-fundamentals/adding-modified-files-in-git
+git status
+copy and paste the modified version after git add
+git add <modified>
+
+add message
+git commit -m "assignment 2"
+
+push it!
+git push
