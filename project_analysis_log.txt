@@ -261,3 +261,321 @@ git commit -m "assignment 2"
 
 push it!
 git push
+
+assignment 3
+Emersyn Jorski
+2026-04-16
+
+enter HPC
+ssh <user>@IP
+
+make sub directory called HW3
+cd /data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/
+mkdir HW3
+
+copy files and move to data/HW2/ and double check
+cp /data/Reynolds/GenomicAnalysisCourse/HW3/* /data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW3
+
+copy fastqc slurm from personal directory into HW3
+step 1
+go back to user directory where slurm lives
+cd ..
+cd ..
+cd ..
+cp fastqc_slurm.sh Jorski-GenomicAnalysis-AnalysisReport1/data/HW3/
+then back in HW3
+cd Jorski-GenomicAnalysis-AnalysisReport1/data/HW3/
+
+adjust slurm to get all fastq files, change output and error file name, and job name
+load conda env
+conda activate /data/Reynolds/GenomicAnalysisCourse/conda_envs/course_env/
+nano fastqc_slurm.sh
+do edits
+going to change name to fastqc_all_slurm.sh incase it does something weird with running all at once
+
+run it
+sbatch fastqc_all_slurm.sh
+ls to check
+yay
+
+now download reports to local directory
+step 1 get where u are and copy it and exit HPC
+pwd
+exit
+step 2
+move to Downloads
+cd Downloads/
+step 3
+scp and move files from HPC to Downloads
+scp ekj0039@10.119.6.131:/data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW3/*zip .
+
+notes of problems!
+L002_R1:
+per tile sequence quality: red, nothing as there are isolated hot tiles
+per base sequence content: yellow, only at beginning so probably from adapter, maybe trim?
+per sequence GC content: yellow, not awful and maybe trimming will help
+adapter content: red, will trim! there is def adapter contamination
+everything else: green!
+L002_R2
+per tile sequence quality: red, nothing as there are isolated hot tiles ish...maybe?
+per base sequence content: yellow, only at beginning so probably from adapter, maybe trim?
+per sequence GC content: yellow, not awful and maybe trimming will help?
+adapter content: red, will trim!? there is defo adapter contamination
+everything else: green!
+L007_R1
+per tile sequence quality: yellow, nothing as there are isolated hot tiles ish...maybe?
+per base sequence content: yellow, only at beginning so probably from adapter, maybe trim?
+per sequence GC content: yellow, not awful and maybe trimming will help?
+adapter content: red, will trim!? there is defo adapter contamination
+L007_R2
+per tile sequence quality: red, nothing as there are isolated hot tiles ish...maybe?
+per base sequence content: yellow, only at beginning so probably from adapter, maybe trim?
+per sequence GC content: yellow, not awful and maybe trimming will help?
+adapter content: red, will trim!? there is defo adapter contamination
+L003_R1
+per base sequence quality: red, low quality at end of read yay, should trim
+per tile sequence quality: red, nothing as there are isolated hot tiles ish...maybe?
+per base sequence content: red, YOW, trim and filter out low quality reads or just re run?
+per sequence GC content: yellow, bimodal, trim
+sequence duplication levels: red, maybe PCR overamp or maybe biological duplicates
+overrepresented sequences: yellow, blasting sequence to see if contamination, nope, definitely adapters the content is ~85% for adapter content
+adapter content: red, trim?
+L003_R2
+per base sequence quality: red, low quality at end of read, should trim
+per base sequence content: red, trim and filter out low quality reads or just re run?
+per sequence GC content: red, bimodal, trim
+sequence duplication levels: red, maybe PCR overamp or maybe biological duplicates
+overrepresented sequences: yellow, blasting sequence to see if contamination, nope, definitely adapters the content is ~85% for adapter content
+adapter content: red, trim?
+
+processing
+re-enter HPC
+ssh ekj0039@10.119.6.131 
+
+activate conda
+conda activate /data/Reynolds/GenomicAnalysisCourse/conda_envs/course_env/
+check fastp presence
+fastp -version
+slay we have it
+
+so since I did something funky with fastp in class and re-wrote the script, BUT have pic of the code we ran in the slurm, im going to use fastqc_all_slurm.sh and make the necessary edits and re-name to a new slurm fastp_slurm.sh
+step 1, get where we need to be
+cd /data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW3/
+change all outputs to fastqc_HW3_r2_output.txt and same with error
+nano fastqc_all_slurm.sh
+going to separate slurms based on sample
+
+fastp -i 22018FL-04-01-12_S12_L002_R1_001.fastq.gz -I 22018FL-04-01-12_S12_L002_R2_001.fastq.gz -o 22018FL-04-01-12_S12_L002_R1_001_trimmed.fastq.gz -O 22018FL-04-01-12_S12_L002_R2_001_trimmed.fastq.gz --thread 4
+rename fastp_r2_L002_slurm.sh
+
+rename input output
+fastp -i 22018FL-04-01-21_S21_L007_R1_001.fastq.gz -I 22018FL-04-01-21_S21_L007_R2_001.fastq.gz  -o 22018FL-04-01-21_S21_L007_R1_001_trimmed.fastq.gz -O 22018FL-04-01-21_S21_L007_R2_001_trimmed.fastq.gz --thread 4
+rename fastp_r2_L007_slurm.sh 
+
+rename input output
+fastp -i 22154FL-03-01-01_S1_L003_R1_001.fastq.gz -I 22154FL-03-01-01_S1_L003_R2_001.fastq.gz -o 22154FL-03-01-01_S1_L003_R1_001_trimmed.fastq.gz -O 22154FL-03-01-01_S1_L003_R2_001_trimmed.fastq.gz --tread 4
+rename fastp_r2_L003_slurm.sh
+
+run!
+sbatch fastp_r2_L002_slurm.sh
+ls between
+sbatch fastp_r2_L003_slurm.sh
+ls between
+sbatch fastp_r2_L007_slurm.sh
+
+
+run fastqc again
+nano fastqc_all_slurm
+change fastqc_all_slurm to fastqc_all_r2_slurm.sh
+output to fastqc_actual_r2_output.txt
+error to fastqc_actual_r2_error.txt
+and all the trimmed q files
+
+now download reports to local directory
+step 1 get where u are and copy it and exit HPC
+pwd
+exit
+step 2
+move to Downloads
+cd Downloads/
+step 3
+scp and move files from HPC to Downloads
+scp ekj0039@10.119.6.131:/data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW3/*_trimmed_fastqc.zip .
+
+
+reviewing
+L002_R1
+per tile sequence quality: red, isolated so nothing
+per base sequence content: yellow, only at beginning but we trimmed so not adapters
+per sequence GC content: yellow, still pretty similar to theoretical
+sequence length distribution: yellow, thats fine and will do nothing
+everything else: green!
+
+L002_R2
+per tile sequence quality: red, isolated so nothing
+per base sequence content: yellow, only at beginning but we trimmed so not adapters
+per sequence GC content: yellow, still pretty similar to theoretical
+sequence length distribution: yellow, thats fine and will do nothing
+everything else: green!
+
+L003_R1
+per base sequence quality: red, but already trimmed so likely overamplified library
+per tile sequence quality: red, but isolated so nothing
+per base sequence content: red, and crazy in the beginning, maybe PCR overamp, im going to trim the first 10 bases?
+per sequence GC content: red, contaminated library possible
+sequence length distrubution: yellow, around 60 bp for peak, maybe contamination
+sequence duplication levels: red, maybe PCR overamp
+overrepresented sequences: yellow, BLAST showed no match for the two sequences, possible contamination
+everything else: green!
+
+L003_R2
+per base sequence quality: red, but already trimmed so likely overamplified library
+per base sequence content: red, and crazy in the beginning, maybe PCR overamp, im going to trim first 10 bases?
+per sequence GC content: red, contaminated library possible
+sequence length distrubution: yellow, around 60 bp for peak, maybe contamination
+sequence duplication levels: red, maybe PCR overamp
+overrepresented sequences: yellow, BLAST showed no match for the three sequences, possible contamination
+everything else: green!
+
+L007_R1
+per tile sequence quality: yellow, isolated so nothing
+per base sequence content: yellow, only at beginning but we trimmed so not adapters
+per sequence GC content: yellow, still pretty similar to theoretical
+sequence length distribution: yellow, thats fine and will do nothing
+everything else: green!
+
+L007_R2
+per tile sequence quality: red, isolated so nothing
+per base sequence content: yellow, only at beginning but we trimmed so not adapters
+per sequence GC content: yellow, still pretty similar to theoretical
+sequence length distribution: yellow, thats fine and will do nothing
+everything else: green!
+
+editing L003 some more
+https://github.com/opengene/fastp#low-complexity-filter
+
+edit fastp for L003 sample
+nano fastp_r2_L003_slurm.sh
+--trim_front1 10\
+--trim_front2 10\
+--thread 4
+sbatch fastp_r3_L003_slurm.sh
+nano fastqc_L003_r2_slurm.sh
+change files and output names to have _r3
+sbatch fastqc_L003_r3_slurm.sh
+ls to check it is there
+exit
+move to Downloads
+cd Downloads
+copy
+scp ekj0039@10.119.6.131:/data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW3/*_trimmed_r3_fastqc.zip .
+
+Review:
+R1
+low base sequence quality: red, trim tails
+per base sequence content: red, trim tails
+per sequence GC content: red, still looks same as before, move on
+sequence length distribution: yellow, still same peak in 50s, contamination likely
+sequence duplication level: red, PCR overamp
+overrepresented sequences: yellow, no hit in blast, maybe poly g?
+adapter content: red, adapter content
+R2: 
+low base sequence quality: red, trim tails
+per base sequence content: red, trim tails
+per sequence GC content: red, still looks same as before, move on
+sequence length distribution: yellow, still same peak in 50s, contamination likely
+sequence duplication level: red, PCR overamp
+overrepresented sequences: yellow, no hit in blast, maybe poly g?
+adapter content: red, adapter content
+
+update fastp_r3_L003_slurm.sh and save into
+fastp_r4_L003_slurm.sh
+make sure we run with updated files and new name
+now going to use --cut_tail to trim low quality bases at end
+--cut_mean_quality 20 to trim until better quality phred score of 20
+and --detect_adapter_for_pe
+nano fastp_r3_L003_slurm.sh
+sbatch fastp_r4_L003_slurm.sh
+
+change fastqc_L003_r3_slurm.sh
+save as fastqc_L003_r4_slurm.sh
+with new outputs and files
+nano fastqc_L003_r3_slurm.sh
+sbatch fastqc_L003_r4_slurm.sh
+
+download to local directory
+exit
+cd Downloads/
+scp ekj0039@10.119.6.131:/data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW3/*_trimmed_r4_fastqc.zip .
+
+review
+looking a lot better
+R1:
+per tile sequence quality: yellow, isolated, do nothing
+per base sequence content: yellow, that is fine, are mainly parallel
+per sequence GC content: red, probably from overamp/low complexity
+sequence length distribution: yellow, contamination?
+sequence duplication levels: red, PCR overamp
+overrepresented sequences: yellow, PCR overamp
+R2:
+per base sequence content: yellow, that is fine, are mainly parallel
+per sequence GC content: red, probably from overamp/low complexity
+sequence length distribution: yellow, contamination?
+sequence duplication levels: red, PCR overamp
+overrepresented sequences: yellow, PCR overamp
+
+update fastp_r4_L003_slurm.sh and save into
+fastp_r5_L003_slurm.sh
+make sure we run with updated files and new name
+now going to use --low_complexity_filter and --complexity_threshold 30
+nano fastp_r4_L003_slurm.sh
+sbatch fastp_r5_L003_slurm.sh
+
+change fastqc_L003_r4_slurm.sh
+save as fastqc_L003_r5_slurm.sh
+with new outputs and files
+nano fastqc_L003_r4_slurm.sh
+sbatch fastqc_L003_r5_slurm.sh
+
+download to local directory
+exit
+cd Downloads/
+scp ekj0039@10.119.6.131:/data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW3/*_trimmed_r5_fastqc.zip .
+
+review
+*as good as it is going to get, but I would have re-sequenced with less PCR runs
+R1
+per tile sequence quality: yellow, isolated, do nothing
+per base sequence content: yellow, that is fine, are mainly parallel
+per sequence GC content: red, probably from overamp/low complexity
+sequence length distribution: yellow, contamination?
+sequence duplication levels: red, PCR overamp
+overrepresented sequences: yellow, PCR overamp
+R2
+per base sequence content: yellow, that is fine, are mainly parallel
+per sequence GC content: red, probably from overamp/low complexity
+sequence length distribution: yellow, contamination?
+sequence duplication levels: red, PCR overamp
+overrepresented sequences: yellow, PCR overamp
+
+now we update our project_analysis_log.txt and push to GutHub
+get where we need to be
+cd Desktop
+cd GenomicAnalysis
+cd project
+
+update analysis log
+nano project_analysis_log.txt
+add in all of our notes and code by copy paste from visual studio code
+
+get exact path to use for git add
+source: https://craftquest.io/guides/git/git-fundamentals/adding-modified-files-in-git
+git status
+copy and paste the modified version after git add
+git add <modified>
+
+add message
+git commit -m "assignment 2"
+
+push it!
+git push
