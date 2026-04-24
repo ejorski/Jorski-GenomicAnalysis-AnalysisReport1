@@ -579,3 +579,190 @@ git commit -m "assignment 2"
 
 push it!
 git push
+
+#assignment 4
+#Emersyn Jorski
+2026-04-21
+
+#enter HPC
+ssh <user>@IP
+
+#make sub directory called HW4
+cd /data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/
+mkdir HW4
+
+#enter and activate conda
+cd HW4
+conda activate /data/Reynolds/GenomicAnalysisCourse/conda_envs/course_env/
+
+#copy FASTQ pairs from HW3 that were QC'd
+cd HW3/
+#ls to get names of the final FASTQ files
+ls
+#pasted here: 22018FL-04-01-12_S12_L002_R1_001_trimmed.fastq.gz 
+#22018FL-04-01-12_S12_L002_R2_001_trimmed.fastq.gz 
+#22018FL-04-01-21_S21_L007_R1_001_trimmed.fastq.gz
+#22018FL-04-01-21_S21_L007_R2_001_trimmed.fastq.gz
+#22154FL-03-01-01_S1_L003_R1_001_trimmed_r5.fastq.gz  
+#22154FL-03-01-01_S1_L003_R2_001_trimmed_r5.fastq.gz
+#copy and move to HW4
+cp 22018FL-04-01-12_S12_L002_R1_001_trimmed.fastq.gz 22018FL-04-01-12_S12_L002_R2_001_trimmed.fastq.gz 22018FL-04-01-21_S21_L007_R1_001_trimmed.fastq.gz 22018FL-04-01-21_S21_L007_R2_001_trimmed.fastq.gz 22154FL-03-01-01_S1_L003_R1_001_trimmed_r5.fastq.gz 22154FL-03-01-01_S1_L003_R2_001_trimmed_r5.fastq.gz /data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW4/
+
+#move to /data and enter HW4/ and double check
+cd ..
+cd HW4/
+ls
+
+#copy "bare" bwa_slurm.sh from ekj0039 directory into 
+cd ..
+cd ..
+cd ..
+cp bwa_slurm.sh Jorski-GenomicAnalysis-AnalysisReport1/data/HW4/
+
+#rename and adjust (by saving separate) to L002, L003, and L007 respectively
+cd /data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW4/
+nano bwa_slurm.sh
+#L002: output: emersyn_bwa_L002_output.txt, error: emersyn_bwa_L002_error.txt, time 00:30:00
+#conda activate /data/Reynolds/GenomicAnalysisCourse/conda_envs/course_env/
+#cd /data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW4/ 
+#bwa mem –t 4 /data/Reynolds/GenomicAnalysisCourse/reference/hg38.fa.gz 22018FL-04-01-12_S12_L002_R1_001_trimmed.fastq.gz 22018FL-04-01-12_S12_L002_R2_001_trimmed.fastq.gz > L002_aligned.sam
+#rename to bwa_L002_slurm.sh
+sbatch bwa_L002_slurm.sh
+
+
+#L003: 2 hour time, 12GB, 8 nodes
+#changes to be made: output=emersyn_bwa_L003_output.txt, error=emersyn_bwa_L003_error.txt, and r5 files
+nano bwa_L002_slurm.sh
+#save new file as bwa_L003_slurm.sh
+#L007: 9 hour time to conserve memory (if I am understanding this right because it did not complete after 2;))...YOW that took 4 hours
+#8 nodes and 12GB
+#changes to be made: output=emersyn_bwa_L007_output.txt, error=emersyn_bwa_L007_error.txt, and L007 files
+nano bwa_L002_slurm.sh
+#save new file as bwa_L007_slurm.sh
+sbatch bwa_L003_slurm.sh
+sbatch bwa_L007_slurm.sh
+
+#step 2
+#sort and ls between
+samtools sort L002_aligned.sam -o L002_aligned.sorted.sam
+ls
+samtools sort L003_aligned.sam -o L003_aligned.sorted.sam
+ls
+samtools sort L007_aligned.sam -o L007_aligned.sorted.sam
+ls
+
+#we sorted above so do not need to again
+#convert everything to BAM files and ls between to check!
+samtools view -b -o L002_aligned.bam L002_aligned.sorted.sam
+ls
+samtools view -b -o L003_aligned.bam L003_aligned.sorted.sam
+ls
+samtools view -b -o L007_aligned.bam L007_aligned.sorted.sam
+ls
+
+#index bam files
+samtools index L002_aligned.bam
+samtools index L003_aligned.bam
+samtools index L007_aligned.bam
+
+#produce mapping quality
+qualimap bamqc -nt 8 -bam L002_aligned.bam -outdir L002_aligned_qualimap_results
+qualimap bamqc -nt 8 -bam L003_aligned.bam -outdir L003_aligned_qualimap_results
+
+#running L007 on 4 threads with specified memory because shes a curvy lady with 82 beautiful Gs
+qualimap bamqc --java-mem-size=8G -nt 4 -bam L007_aligned.bam -outdir L007_aligned_qualimap_results
+
+
+#examine mapping quality
+ls
+pwd
+exit
+cd /Downloads
+scp -r ekj0039@10.119.6.131:/data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW4/L002_aligned_qualimap_results/ .
+scp -r ekj0039@10.119.6.131:/data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW4/L003_aligned_qualimap_results/ .
+scp -r ekj0039@10.119.6.131:/data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW4/L007_aligned_qualimap_results/ .
+
+#review:
+#L002:
+#mapped reads: 96.06%, duplicated reads: 33.47%, mean coverage: 0.69, mapping quality: 30.57
+#L003:
+#mapped reads: 70.4%, duplicated reads: 68.53%, mean coverage: 0.65, mapping quality: 20.48
+#L007:
+#mapped reads: 94.43%, duplicated reads: 43.73%, mean coverage: 7.56, mapping quality: 30.17
+
+#coverage calculation L002:
+mosdepth -t 4 L002_aligned L002_aligned.bam
+less -S L002_aligned.mosdepth.summary.txt 
+#average coverage of each sample: 0.46
+#quality of variant calls expected: ultra-low
+#coverage calculation L003:
+mosdepth -t 4 L003_aligned L003_aligned.bam
+less -S L003_aligned.mosdepth.summary.txt
+#average coverage of each sample: 0.35
+#quality of variant calls expected: ultra-low
+#coverage calculation L007:
+mosdepth -t 4 L007_aligned L007_aligned.bam
+less -S L007_aligned.mosdepth.summary.txt
+#average coverage of each sample: 4.97
+#quality of variant calls expected: low
+
+
+#put in read groups, I attempted to mark dups but needed RGs
+picard AddOrReplaceReadGroups I=L002_aligned.bam O=L002_aligned.RG.bam RGID=sample RGLB=lib1 RGPL=ILLUMINA RGPU=unit1 RGSM=sample
+picard AddOrReplaceReadGroups I=L003_aligned.bam O=L003_aligned.RG.bam RGID=sample RGLB=lib1 RGPL=ILLUMINA RGPU=unit1 RGSM=sample
+picard AddOrReplaceReadGroups I=L007_aligned.bam O=L007_aligned.RG.bam RGID=sample RGLB=lib1 RGPL=ILLUMINA RGPU=unit1 RGSM=sample
+
+
+
+#mark duplicates
+picard MarkDuplicates -I L002_aligned.RG.bam -O L002_aligned.markdups.bam -M L002_aligned.markdups_metrics.txt
+picard MarkDuplicates -I L003_aligned.RG.bam -O L003_aligned.markdups.bam -M L003_aligned.markdups_metrics.txt
+picard MarkDuplicates -I L007_aligned.RG.bam -O L007_aligned.markdups.bam -M L007_aligned.markdups_metrics.txt
+
+
+#re-run qualimap
+qualimap bamqc -nt 8 -bam L002_aligned.markdups.bam -outdir L002_aligned.markdups_qualimap_results
+qualimap bamqc -nt 8 -bam L003_aligned.markdups.bam -outdir L003_aligned.markdups_qualimap_results
+qualimap bamqc --java-mem-size=8G -nt 4 -bam L007_aligned.markdups.bam -outdir L007_aligned.markdups_qualimap_results
+
+#download to local
+ls
+pwd
+exit
+cd Downloads/
+scp -r ekj0039@10.119.6.131:/data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW4/L002_aligned.markdups_qualimap_results/ .
+scp -r ekj0039@10.119.6.131:/data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW4/L003_aligned.markdups_qualimap_results/ .
+scp -r ekj0039@10.119.6.131:/data/Reynolds/ekj0039/Jorski-GenomicAnalysis-AnalysisReport1/data/HW4/L007_aligned.markdups_qualimap_results/ .
+
+#examination of qualimap after MarkDuplicates
+#L002:
+#proportion marked as duplicates: 13.25%
+#how has it changed: decreased by 20.22%
+#L003:
+#proportion marked as duplicates: 68.13%
+#how has it changed: decreased by 0.4%
+#L007:
+#proportion marked as duplicates: 16.43%
+#how has it changed: decreased by 27.3%
+
+now we update our project_analysis_log.txt and push to GutHub
+get where we need to be
+cd Desktop
+cd GenomicAnalysis
+cd project
+
+#update analysis log
+nano project_analysis_log.txt
+# add in all of our notes and code by copy paste from visual studio code
+
+get exact path to use for git add
+source: https://craftquest.io/guides/git/git-fundamentals/adding-modified-files-in-git
+git status
+copy and paste the modified version after git add
+git add <modified>
+
+add message
+git commit -m "assignment 4"
+
+push it!
+git push
